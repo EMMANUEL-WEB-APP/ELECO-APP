@@ -6,24 +6,26 @@ from flask_mail import Mail, Message
 
 app = Flask(__name__)
 
-# --- DATABASE CONFIG (Place this here at the top) ---
+# --- DATABASE CONFIG (Absolute path for Render & local compatibility) ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'election.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
+
+# --- AUTOMATIC TABLE CREATION ON STARTUP (Required for Render/Gunicorn) ---
+with app.app_context():
+    db.create_all()
+    if not ElectionSettings.query.first() if 'ElectionSettings' in globals() else True:
+        pass # handled below safely or handled after models load
+
 # --- EMAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
 app.config['MAIL_USE_TLS'] = True
-app.config['MAIL_USERNAME'] = 'ndubuechi8@gmail.com' # 👈 CHANGE THIS to your Gmail
-app.config['MAIL_PASSWORD'] = 'kendtyuzntfazetp'    # 👈 CHANGE THIS to your 16-character App Password
+app.config['MAIL_USERNAME'] = 'ndubuechi8@gmail.com' 
+app.config['MAIL_PASSWORD'] = 'kendtyuzntfazetp'    
 mail = Mail(app)
-
-# --- DATABASE CONFIGURATION ---
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///election.db'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-
 
 # --- DATABASE TABLES ---
 class RegisteredVoter(db.Model):
@@ -42,8 +44,16 @@ class ElectionSettings(db.Model):
     registration_open = db.Column(db.Boolean, default=False)
     voting_open = db.Column(db.Boolean, default=False)
 
+# --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
+with app.app_context():
+    db.create_all()
+    if not ElectionSettings.query.first():
+        db.session.add(ElectionSettings(registration_open=False, voting_open=False))
+        db.session.commit()
+
 # --- MASTER LIST ---
 VALID_VOTERS = ['ADUN/24/007', 'ADUN/24/008', 'ADUN/24/009', 'ADUN/24/010', 'ADUN/24/011', 'ADUN/24/012']
+
 # --- ROUTES ---
 @app.route('/')
 def home():
@@ -80,7 +90,7 @@ def register():
     # Send the voting credential via Email
     try:
         msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[email_input])
-        msg.body = f"Hello {matric_no_input},\n\nYour secret voting credential for the BAYELSA MEDICAL UNIVERSITY election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
+        msg.body = f"Hello {matric_no_input},\n\nYour secret voting credential for the election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
         mail.send(msg)
     except Exception as e:
         return f"<h3>⚠️ Registered successfully, but failed to send email: {e}</h3><br><a href='/'>Go Home</a>"
@@ -128,7 +138,6 @@ def admin_panel():
     total_votes = len(all_votes)
     settings = ElectionSettings.query.first()
     
-    # Calculate vote breakdown per candidate
     candidates_list = [
         "Candidate A (Progressive Party)", 
         "Candidate B (Unity Alliance)", 
@@ -149,7 +158,6 @@ def admin_panel():
             'percentage': round(percentage, 1)
         })
         
-        # Track leader/winner
         if count > max_votes:
             max_votes = count
             winner = candidate
@@ -162,6 +170,7 @@ def admin_panel():
         results=candidate_results,
         winner=winner if total_votes > 0 else "Election in progress"
     )
+
 @app.route('/admin/toggle', methods=['POST'])
 def toggle_settings():
     settings = ElectionSettings.query.first()
@@ -183,9 +192,4 @@ def admin_logout():
     return redirect('/admin/login')
 
 if __name__ == '__main__':
-    with app.app_context():
-        db.create_all()
-        if not ElectionSettings.query.first():
-            db.session.add(ElectionSettings(registration_open=False, voting_open=False))
-            db.session.commit()
     app.run(host='0.0.0.0', port=5000, debug=True)
