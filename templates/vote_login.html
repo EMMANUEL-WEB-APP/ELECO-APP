@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Voting Booth Login</title>
+    <style>
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 100px; text-align: center; }
+        .card { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 10px; margin: 15px 0; border: 1px solid #ccc; border-radius: 4px; text-align: center; font-size: 16px; text-transform: uppercase; }
+        button { width: 95%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; }
+        button:hover { background-color: #218838; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>🗳️ Enter Voting Booth</h2>
+        <p>Please enter your unique secret voting credential provided during registration.</p>
+        <form action="/vote" method="POST">
+            <input type="text" name="credential" placeholder="e.g. VOTER-1A2B3C" required>
+            <button type="submit">Access Ballot</button>
+        </form>
+    </div>
+</body>
+</html>
