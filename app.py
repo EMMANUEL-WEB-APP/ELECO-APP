@@ -13,11 +13,7 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 
 db = SQLAlchemy(app)
 
-# --- AUTOMATIC TABLE CREATION ON STARTUP (Required for Render/Gunicorn) ---
-with app.app_context():
-    db.create_all()
-    if not ElectionSettings.query.first() if 'ElectionSettings' in globals() else True:
-        pass # handled below safely or handled after models load
+ # handled below safely or handled after models load
 
 # --- EMAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
