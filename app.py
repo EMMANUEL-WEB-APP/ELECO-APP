@@ -1,11 +1,17 @@
-from flask import Flask, render_template, request, session, redirect, url_for
+import os
+import uuid 
+from flask import Flask, render_template, request, redirect, url_for, session
 from flask_sqlalchemy import SQLAlchemy
 from flask_mail import Mail, Message
-import uuid
 
 app = Flask(__name__)
-app.secret_key = 'super_secret_election_key_2026'
 
+# --- DATABASE CONFIG (Place this here at the top) ---
+basedir = os.path.abspath(os.path.dirname(__file__))
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'election.db')
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
 # --- EMAIL CONFIGURATION ---
 app.config['MAIL_SERVER'] = 'smtp.gmail.com'
 app.config['MAIL_PORT'] = 587
@@ -17,7 +23,7 @@ mail = Mail(app)
 # --- DATABASE CONFIGURATION ---
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///election.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
+
 
 # --- DATABASE TABLES ---
 class RegisteredVoter(db.Model):
