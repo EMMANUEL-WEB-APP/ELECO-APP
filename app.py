@@ -49,14 +49,13 @@ with app.app_context():
         db.session.commit()
 
 # --- MASTER LIST ---
-VALID_VOTERS = ['ADUN/24/007', 'ADUN/24/008', 'ADUN/24/009', 'ADUN/24/010', 'ADUN/24/011', 'ADUN/24/012']
+VALID_VOTERS = ['UG/23/0533']
 
 # --- ROUTES ---
 @app.route('/')
 def home():
     settings = ElectionSettings.query.first()
     return render_template('index.html', settings=settings)
-
 @app.route('/register', methods=['POST'])
 def register():
     settings = ElectionSettings.query.first()
@@ -245,10 +244,6 @@ with app.app_context():
     if not ElectionSettings.query.first():
         db.session.add(ElectionSettings(registration_open=False, voting_open=False))
         db.session.commit()
-
-# --- MASTER LIST ---
-VALID_VOTERS = ['ADUN/24/007', 'ADUN/24/008', 'ADUN/24/009', 'ADUN/24/010', 'ADUN/24/011', 'ADUN/24/012']
-
 # --- ROUTES ---
 @app.route('/')
 def home():
