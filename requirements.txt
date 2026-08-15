@@ -1,4 +1,10 @@
+<<<<<<< HEAD
 Flask
 Flask-SQLAlchemy
 Flask-Mail
+=======
+Flask
+Flask-SQLAlchemy
+Flask-Mail
+>>>>>>> 567f6a2 (cleaned code)
 gunicorn
