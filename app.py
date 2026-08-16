@@ -54,12 +54,12 @@ with app.app_context():
         db.session.add(ElectionSettings(registration_open=False, voting_open=False))
         db.session.commit()
 
-# --- MASTER LIST (Add approved student matric numbers here) ---
+# --- MASTER LIST (Add all approved student matric numbers here) ---
 VALID_VOTERS = [
     'UG/23/0533',
-    'ADUN/24/007'  # Add your department/university matric numbers here
+    'ADUN/24/007',
+    'ADUN/24/009'  # Add the exact matric number you are testing here
 ]
-
 # --- ROUTES ---
 @app.route('/')
 def home():
