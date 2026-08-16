@@ -66,6 +66,15 @@ def home():
     settings = ElectionSettings.query.first()
     return render_template('index.html', settings=settings)
 
+@app.route('/admin/clear-votes', methods=['POST'])
+def clear_votes():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    VoteRecord.query.delete()
+    db.session.commit()
+    return redirect('/admin')
+
 @app.route('/admin/delete/<int:voter_id>', methods=['POST'])
 def delete_voter(voter_id):
     if not session.get('admin_logged_in'): 

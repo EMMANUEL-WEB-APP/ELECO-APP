@@ -46,6 +46,11 @@
             <div style="margin-top: 15px; background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold;">
                 🏆 Projected Winner / Leading Candidate: {{ winner }}
             </div>
+
+            <!-- Reset / Clear All Votes Button -->
+            <form action="/admin/clear-votes" method="POST" onsubmit="return confirm('Are you sure you want to wipe all votes and reset the ballot box?');" style="text-align: center; margin-top: 15px;">
+                <button type="submit" style="padding: 6px 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Reset / Clear All Votes</button>
+            </form>
         </div>
 
         <h3 style="text-align: center;">Registered Voters Database & Eligibility</h3>
