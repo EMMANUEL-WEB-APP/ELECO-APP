@@ -8,3 +8,6 @@ Flask-SQLAlchemy
 Flask-Mail
 >>>>>>> 567f6a2 (cleaned code)
 gunicorn
+Flask
+Flask-SQLAlchemy
+Flask-Mail
