@@ -3,70 +3,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Official Ballot</title>
+    <title>Official Ballot - ELECO</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 50px; text-align: center; }
-        .card { background: white; max-width: 500px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: left; }
-        .candidate-option { background: #f9f9f9; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-        .candidate-option:hover { background: #e9ecef; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
-        button:hover { background-color: #0056b3; }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding: 20px; }
+        .container { max-width: 600px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
         h2 { text-align: center; color: #333; }
+        .position-box { background: #f9fafb; border: 1px solid #e5e7eb; padding: 15px; border-radius: 6px; margin-bottom: 20px; }
+        .position-title { font-weight: bold; color: #1f2937; margin-bottom: 10px; font-size: 16px; }
+        label { display: block; margin: 8px 0; cursor: pointer; }
+        button { display: block; width: 100%; padding: 12px; background-color: #28a745; color: white; border: none; border-radius: 4px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 20px; }
+        button:hover { background-color: #218838; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Departmental Election Ballot</h2>
-        <p style="text-align: center; color: #666; font-size: 14px;">Select your preferred candidate for President. Your vote is completely anonymous.</p>
+    <div class="container">
+        <h2>🗳️ Official Departmental Ballot</h2>
+        <p style="text-align: center; color: #6b7280;">Please select one candidate for each executive position below.</p>
         
         <form action="/ballot" method="POST">
-            {% for candidate in candidates %}
-            <div class="candidate-option">
-                <label style="cursor: pointer; display: block; width: 100%;">
-                    <input type="radio" name="candidate" value="{{ candidate }}" required style="margin-right: 10px;">
-                    <strong>{{ candidate }}</strong>
+            {% for position, candidates in positions.items() %}
+            <div class="position-box">
+                <div class="position-title">{{ position }}</div>
+                {% for candidate in candidates %}
+                <label>
+                    <input type="radio" name="{{ position }}" value="{{ candidate }}" required> {{ candidate }}
                 </label>
+                {% endfor %}
             </div>
             {% endfor %}
             
-            <button type="submit">Submit Anonymous Vote</button>
+            <button type="submit">Submit Final Ballot</button>
         </form>
     </div>
 </body>
-=======
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Official Ballot</title>
-    <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 50px; text-align: center; }
-        .card { background: white; max-width: 500px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); text-align: left; }
-        .candidate-option { background: #f9f9f9; padding: 15px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; cursor: pointer; }
-        .candidate-option:hover { background: #e9ecef; }
-        button { width: 100%; padding: 12px; background-color: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 20px; }
-        button:hover { background-color: #0056b3; }
-        h2 { text-align: center; color: #333; }
-    </style>
-</head>
-<body>
-    <div class="card">
-        <h2>Departmental Election Ballot</h2>
-        <p style="text-align: center; color: #666; font-size: 14px;">Select your preferred candidate for President. Your vote is completely anonymous.</p>
-        
-        <form action="/ballot" method="POST">
-            {% for candidate in candidates %}
-            <div class="candidate-option">
-                <label style="cursor: pointer; display: block; width: 100%;">
-                    <input type="radio" name="candidate" value="{{ candidate }}" required style="margin-right: 10px;">
-                    <strong>{{ candidate }}</strong>
-                </label>
-            </div>
-            {% endfor %}
-            
-            <button type="submit">Submit Anonymous Vote</button>
-        </form>
-    </div>
-</body>
->>>>>>> 567f6a2 (cleaned code)
 </html>
