@@ -66,7 +66,8 @@ class ElectionSettings(db.Model):
 
 # --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
 with app.app_context():
-    db.create_all()
+    db.drop_all()  # Clears the old broken table structure
+    db.create_all() # Rebuilds everything with the correct columns for all 11 positions
     if not ElectionSettings.query.first():
         db.session.add(ElectionSettings(registration_open=False, voting_open=False))
         db.session.commit()
