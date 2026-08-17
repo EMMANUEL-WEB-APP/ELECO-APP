@@ -38,7 +38,6 @@ class RegisteredVoter(db.Model):
     voter_credential = db.Column(db.String(50), unique=True, nullable=False)
     has_voted = db.Column(db.Boolean, default=False)
 
-# --- UPDATE VOTE RECORD MODEL ---
 class VoteRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     position = db.Column(db.String(100), nullable=False)
@@ -66,8 +65,8 @@ class ElectionSettings(db.Model):
 
 # --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
 with app.app_context():
-    db.drop_all()  # Clears the old broken table structure
-    db.create_all() # Rebuilds everything with the correct columns for all 11 positions
+    db.drop_all() 
+    db.create_all() 
     if not ElectionSettings.query.first():
         db.session.add(ElectionSettings(registration_open=False, voting_open=False))
         db.session.commit()
@@ -76,8 +75,9 @@ with app.app_context():
 VALID_VOTERS = [
     'UG/23/0533',
     'ADUN/24/007',
-    'ADUN/24/009'  # Add the exact matric number you are testing here
+    'ADUN/24/009'
 ]
+
 # --- ROUTES ---
 @app.route('/')
 def home():
@@ -102,7 +102,7 @@ def delete_voter(voter_id):
     voter = RegisteredVoter.query.get_or_404(voter_id)
     db.session.delete(voter)
     db.session.commit()
-    return redirect('/admin')
+    return redirect(url_for('admin_panel'))
 
 @app.route('/register', methods=['POST'])
 def register():
@@ -120,7 +120,6 @@ def register():
     if existing_voter:
         return f"<h3>❌ Error: Matric Number {matric_no_input} is already registered!</h3><br><a href='/'>Go Back</a>"
 
-    # Generate unique credential
     credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
 
     new_voter = RegisteredVoter(
@@ -131,7 +130,6 @@ def register():
     db.session.add(new_voter)
     db.session.commit()
     
-    # --- SEND EMAIL VIA BACKGROUND THREAD (Prevents 500 Worker Timeout) ---
     try:
         msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[email_input])
         msg.body = f"Hello {matric_no_input},\n\nYour secret voting credential for the election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
@@ -165,7 +163,6 @@ def ballot():
     if not voter or voter.has_voted: return redirect('/vote')
 
     if request.method == 'POST':
-        # Loop through all 11 positions and save each vote
         for position in ELECTION_POSITIONS.keys():
             selected_candidate = request.form.get(position)
             if selected_candidate:
@@ -189,7 +186,6 @@ def admin_panel():
     position_results = {}
     for position, candidates in ELECTION_POSITIONS.items():
         candidates_data = []
-        # Calculate total votes cast specifically for this position
         total_pos_votes = sum(VoteRecord.query.filter_by(position=position, candidate=c).count() for c in candidates)
         
         for candidate in candidates:
@@ -221,26 +217,6 @@ def admin_toggle():
         db.session.commit()
     return redirect(url_for('admin_panel'))
 
-@app.route('/admin/clear-votes', methods=['POST'])
-def clear_votes():
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('admin_login'))
-    
-    VoteRecord.query.delete()
-    # Reset all voters' has_voted status back to False
-    RegisteredVoter.query.update({RegisteredVoter.has_voted: False})
-    db.session.commit()
-    return redirect(url_for('admin_panel'))
-
-@app.route('/admin/delete/<intvoter_id>', methods=['POST'])
-def delete_voter(voter_id):
-    if not session.get('admin_logged_in'): 
-        return redirect(url_for('admin_login'))
-    
-    voter = RegisteredVoter.query.get_or_404(voter_id)
-    db.session.delete(voter)
-    db.session.commit()
-    return redirect(url_for('admin_panel'))
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST' and request.form.get('password') == 'eleco2026':
