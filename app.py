@@ -209,13 +209,37 @@ def admin_panel():
     )
 
 @app.route('/admin/toggle', methods=['POST'])
-def toggle_settings():
+def admin_toggle():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
     settings = ElectionSettings.query.first()
-    settings.registration_open = True if request.form.get('registration') == 'on' else False
-    settings.voting_open = True if request.form.get('voting') == 'on' else False
-    db.session.commit()
-    return redirect('/admin')
+    if settings:
+        settings.registration_open = True if request.form.get('registration') else False
+        settings.voting_open = True if request.form.get('voting') else False
+        db.session.commit()
+    return redirect(url_for('admin_panel'))
 
+@app.route('/admin/clear-votes', methods=['POST'])
+def clear_votes():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    VoteRecord.query.delete()
+    # Reset all voters' has_voted status back to False
+    RegisteredVoter.query.update({RegisteredVoter.has_voted: False})
+    db.session.commit()
+    return redirect(url_for('admin_panel'))
+
+@app.route('/admin/delete/<intvoter_id>', methods=['POST'])
+def delete_voter(voter_id):
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    voter = RegisteredVoter.query.get_or_404(voter_id)
+    db.session.delete(voter)
+    db.session.commit()
+    return redirect(url_for('admin_panel'))
 @app.route('/admin/login', methods=['GET', 'POST'])
 def admin_login():
     if request.method == 'POST' and request.form.get('password') == 'eleco2026':
