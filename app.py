@@ -90,8 +90,9 @@ def clear_votes():
         return redirect(url_for('admin_login'))
     
     VoteRecord.query.delete()
+    RegisteredVoter.query.update({RegisteredVoter.has_voted: False})
     db.session.commit()
-    return redirect('/admin')
+    return redirect(url_for('admin_panel'))
 
 @app.route('/admin/delete/<int:voter_id>', methods=['POST'])
 def delete_voter(voter_id):
