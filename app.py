@@ -63,12 +63,19 @@ class ElectionSettings(db.Model):
     registration_open = db.Column(db.Boolean, default=False)
     voting_open = db.Column(db.Boolean, default=False)
 
+# --- HELPER TO GET OR CREATE SETTINGS SAFELY ---
+def get_settings():
+    settings = ElectionSettings.query.first()
+    if not settings:
+        settings = ElectionSettings(registration_open=False, voting_open=False)
+        db.session.add(settings)
+        db.session.commit()
+    return settings
+
 # --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
 with app.app_context():
     db.create_all() # Creates tables safely without deleting existing data
-    if not ElectionSettings.query.first():
-        db.session.add(ElectionSettings(registration_open=False, voting_open=False))
-        db.session.commit()
+    get_settings()
 
 # --- MASTER LIST (Add all approved student matric numbers here) ---
 VALID_VOTERS = [
@@ -80,7 +87,7 @@ VALID_VOTERS = [
 # --- ROUTES ---
 @app.route('/')
 def home():
-    settings = ElectionSettings.query.first()
+    settings = get_settings()
     return render_template('index.html', settings=settings)
 
 @app.route('/admin/clear-votes', methods=['POST'])
@@ -105,12 +112,16 @@ def delete_voter(voter_id):
 
 @app.route('/register', methods=['POST'])
 def register():
-    settings = ElectionSettings.query.first()
+    settings = get_settings()
     if not settings.registration_open:
         return "<h3>❌ Registration is currently CLOSED.</h3><br><a href='/'>Go Home</a>"
 
-    matric_no_input = request.form.get('matric_no').strip().upper()
-    email_input = request.form.get('email').strip()
+    matric_no_input = request.form.get('matric_no')
+    if not matric_no_input:
+        return "<h3>❌ Error: Matric number cannot be empty.</h3><br><a href='/'>Go Back</a>"
+        
+    matric_no_input = matric_no_input.strip().upper()
+    email_input = request.form.get('email', '').strip()
     
     if matric_no_input not in VALID_VOTERS:
         return f"<h3>❌ Error: {matric_no_input} is not on the approved departmental list.</h3><br><a href='/'>Go Back</a>"
@@ -142,12 +153,16 @@ def register():
 
 @app.route('/vote', methods=['GET', 'POST'])
 def vote_login():
-    settings = ElectionSettings.query.first()
+    settings = get_settings()
     if not settings.voting_open:
         return "<h3>❌ Voting is currently CLOSED.</h3><br><a href='/'>Go Home</a>"
 
     if request.method == 'POST':
-        cred = request.form.get('credential').strip().upper()
+        cred = request.form.get('credential')
+        if not cred:
+            return "<h3>❌ Credential cannot be empty!</h3><br><a href='/vote'>Try Again</a>"
+            
+        cred = cred.strip().upper()
         voter = RegisteredVoter.query.filter_by(voter_credential=cred).first()
         if not voter: return "<h3>❌ Invalid credential!</h3><br><a href='/vote'>Try Again</a>"
         if voter.has_voted: return "<h3>❌ Error: Already voted!</h3><br><a href='/'>Home</a>"
@@ -180,7 +195,7 @@ def admin_panel():
         return redirect(url_for('admin_login'))
         
     voters = RegisteredVoter.query.all()
-    settings = ElectionSettings.query.first()
+    settings = get_settings()
     
     position_results = {}
     for position, candidates in ELECTION_POSITIONS.items():
@@ -209,11 +224,10 @@ def admin_toggle():
     if not session.get('admin_logged_in'): 
         return redirect(url_for('admin_login'))
     
-    settings = ElectionSettings.query.first()
-    if settings:
-        settings.registration_open = True if request.form.get('registration') else False
-        settings.voting_open = True if request.form.get('voting') else False
-        db.session.commit()
+    settings = get_settings()
+    settings.registration_open = True if request.form.get('registration') else False
+    settings.voting_open = True if request.form.get('voting') else False
+    db.session.commit()
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/login', methods=['GET', 'POST'])
