@@ -30,26 +30,29 @@
             
             <hr style="margin: 15px 0; border: 0; border-top: 1px solid #cbd5e1;">
             
-            <div style="text-align: center; font-size: 16px;">
-                📊 Total Anonymous Votes Cast in Ballot Box: <span style="color: #28a745; font-weight: bold;">{{ total_votes }}</span>
-            </div>
-            
-            <h4 style="margin-top: 15px; margin-bottom: 5px;">Live Election Results & Analytics:</h4>
-            <ul style="list-style-type: none; padding: 0; text-align: left; margin: 0;">
-                {% for res in results %}
-                <li style="background: white; padding: 8px 12px; margin: 5px 0; border-radius: 4px; border: 1px solid #cbd5e1;">
-                    <strong>{{ res.name }}</strong>: <span style="color: #007bff;">{{ res.votes }} votes</span> ({{ res.percentage }}%)
-                </li>
+            <!-- Live Results & Progress Bars Analytics for all 11 positions -->
+            <h3 style="text-align: center; margin-top: 15px;">Live Election Results & Analytics</h3>
+            {% for position, candidates in position_results.items() %}
+            <div style="background: white; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-bottom: 15px;">
+                <h4 style="margin-top: 0; color: #007bff; border-bottom: 2px solid #e9ecef; padding-bottom: 8px;">{{ position }}</h4>
+                {% for res in candidates %}
+                <div style="margin-bottom: 10px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 4px;">
+                        <span><strong>{{ res.name }}</strong></span>
+                        <span style="color: #4b5563;">{{ res.votes }} votes ({{ res.percentage }}%)</span>
+                    </div>
+                    <!-- Progress Bar Container -->
+                    <div style="background: #e5e7eb; border-radius: 4px; height: 12px; width: 100%; overflow: hidden;">
+                        <div style="background: #28a745; height: 100%; width: {{ res.percentage }}%; transition: width 0.4s ease;"></div>
+                    </div>
+                </div>
                 {% endfor %}
-            </ul>
-            
-            <div style="margin-top: 15px; background: #d4edda; color: #155724; padding: 10px; border-radius: 4px; text-align: center; font-weight: bold;">
-                🏆 Projected Winner / Leading Candidate: {{ winner }}
             </div>
+            {% endfor %}
 
             <!-- Reset / Clear All Votes Button -->
-            <form action="/admin/clear-votes" method="POST" onsubmit="return confirm('Are you sure you want to wipe all votes and reset the ballot box?');" style="text-align: center; margin-top: 15px;">
-                <button type="submit" style="padding: 6px 15px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Reset / Clear All Votes</button>
+            <form action="/admin/clear-votes" method="POST" onsubmit="return confirm('Are you sure you want to wipe all votes and reset the ballot box?');" style="text-align: center; margin-top: 20px;">
+                <button type="submit" style="padding: 8px 20px; background-color: #dc3545; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold;">Reset / Clear All Votes</button>
             </form>
         </div>
 

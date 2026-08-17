@@ -38,9 +38,26 @@ class RegisteredVoter(db.Model):
     voter_credential = db.Column(db.String(50), unique=True, nullable=False)
     has_voted = db.Column(db.Boolean, default=False)
 
+# --- UPDATE VOTE RECORD MODEL ---
 class VoteRecord(db.Model):
     id = db.Column(db.Integer, primary_key=True)
+    position = db.Column(db.String(100), nullable=False)
     candidate = db.Column(db.String(100), nullable=False)
+
+# --- 11 ELECTION POSITIONS & CANDIDATES ---
+ELECTION_POSITIONS = {
+    "1. President": ["Candidate A (Progressive Party)", "Candidate B (Unity Alliance)"],
+    "2. Vice President": ["Candidate C (Progressive Party)", "Candidate D (Unity Alliance)"],
+    "3. Director of Social": ["Candidate E", "Candidate F"],
+    "4. P.R.O. (Public Relations Officer)": ["Candidate G", "Candidate H"],
+    "5. Treasurer": ["Candidate I", "Candidate J"],
+    "6. Financial Secretary": ["Candidate K", "Candidate L"],
+    "7. Director of Games": ["Candidate M", "Candidate N"],
+    "8. General Secretary": ["Candidate O", "Candidate P"],
+    "9. Assistant General Secretary": ["Candidate Q", "Candidate R"],
+    "10. Provost": ["Candidate S", "Candidate T"],
+    "11. Director of Welfare": ["Candidate U", "Candidate V"]
+}
 
 class ElectionSettings(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -161,41 +178,29 @@ def admin_panel():
         return redirect(url_for('admin_login'))
         
     voters = RegisteredVoter.query.all()
-    all_votes = VoteRecord.query.all()
-    total_votes = len(all_votes)
     settings = ElectionSettings.query.first()
     
-    candidates_list = [
-        "Candidate A (Progressive Party)", 
-        "Candidate B (Unity Alliance)", 
-        "Candidate C (Reform Coalition)"
-    ]
-    
-    candidate_results = []
-    max_votes = -1
-    winner = "No votes cast yet"
-    
-    for candidate in candidates_list:
-        count = VoteRecord.query.filter_by(candidate=candidate).count()
-        percentage = (count / total_votes * 100) if total_votes > 0 else 0
+    position_results = {}
+    for position, candidates in ELECTION_POSITIONS.items():
+        candidates_data = []
+        # Calculate total votes cast specifically for this position
+        total_pos_votes = sum(VoteRecord.query.filter_by(position=position, candidate=c).count() for c in candidates)
         
-        candidate_results.append({
-            'name': candidate,
-            'votes': count,
-            'percentage': round(percentage, 1)
-        })
-        
-        if count > max_votes:
-            max_votes = count
-            winner = candidate
+        for candidate in candidates:
+            count = VoteRecord.query.filter_by(position=position, candidate=candidate).count()
+            percentage = (count / total_pos_votes * 100) if total_pos_votes > 0 else 0
+            candidates_data.append({
+                'name': candidate, 
+                'votes': count,
+                'percentage': round(percentage, 1)
+            })
+        position_results[position] = candidates_data
 
     return render_template(
         'admin.html', 
         voters=voters, 
-        total_votes=total_votes, 
         settings=settings, 
-        results=candidate_results,
-        winner=winner if total_votes > 0 else "Election in progress"
+        position_results=position_results
     )
 
 @app.route('/admin/toggle', methods=['POST'])
