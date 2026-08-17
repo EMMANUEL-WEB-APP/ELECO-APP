@@ -65,8 +65,7 @@ class ElectionSettings(db.Model):
 
 # --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
 with app.app_context():
-    db.drop_all() 
-    db.create_all() 
+    db.create_all() # Creates tables safely without deleting existing data
     if not ElectionSettings.query.first():
         db.session.add(ElectionSettings(registration_open=False, voting_open=False))
         db.session.commit()
