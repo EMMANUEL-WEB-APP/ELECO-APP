@@ -164,14 +164,18 @@ def ballot():
     if not voter or voter.has_voted: return redirect('/vote')
 
     if request.method == 'POST':
-        selected_candidate = request.form.get('candidate')
+        # Loop through all 11 positions and save each vote
+        for position in ELECTION_POSITIONS.keys():
+            selected_candidate = request.form.get(position)
+            if selected_candidate:
+                db.session.add(VoteRecord(position=position, candidate=selected_candidate))
+        
         voter.has_voted = True
-        db.session.add(VoteRecord(candidate=selected_candidate))
         db.session.commit()
         session.pop('voting_credential', None)
-        return "<h3>🎉 Vote successfully cast! Your ballot has been recorded anonymously.</h3><br><a href='/'>Return Home</a>"
+        return "<h3>🎉 All votes successfully cast! Your ballot has been recorded anonymously.</h3><br><a href='/'>Return Home</a>"
 
-    return render_template('ballot.html', candidates=["Candidate A (Progressive Party)", "Candidate B (Unity Alliance)", "Candidate C (Reform Coalition)"])
+    return render_template('ballot.html', positions=ELECTION_POSITIONS)
 
 @app.route('/admin')
 def admin_panel():
