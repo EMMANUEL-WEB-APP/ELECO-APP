@@ -35,7 +35,7 @@ class RegisteredVoter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     matric_no = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), nullable=False)
-    voter_credential = db.Column(db.String(50), unique=True, nullable=False)
+    voter_credential = db.Column(db.String(50), unique=True, nullable=True) # Nullable until admin sends it
     has_voted = db.Column(db.Boolean, default=False)
 
 class VoteRecord(db.Model):
@@ -73,7 +73,6 @@ def get_settings():
 
 with app.app_context():
     db.create_all()
-    # Auto-fix outdated vote_record table schema if missing 'position' column
     try:
         inspector = db.inspect(db.engine)
         if "vote_record" in inspector.get_table_names():
@@ -84,7 +83,7 @@ with app.app_context():
     except Exception as e:
         print(f"Schema check note: {e}")
     get_settings()
-    
+
 VALID_VOTERS = [
     'UG/23/0533',
     'ADUN/24/007',
@@ -117,6 +116,31 @@ def delete_voter(voter_id):
     db.session.commit()
     return redirect(url_for('admin_panel'))
 
+@app.route('/admin/send-credentials', methods=['POST'])
+def send_credentials():
+    if not session.get('admin_logged_in'): 
+        return redirect(url_for('admin_login'))
+    
+    # Find all voters who haven't been assigned a credential yet
+    unprocessed_voters = RegisteredVoter.query.filter(
+        (RegisteredVoter.voter_credential == None) | (RegisteredVoter.voter_credential == '')
+    ).all()
+    
+    for voter in unprocessed_voters:
+        credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
+        voter.voter_credential = credential
+        db.session.commit()
+        
+        try:
+            msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[voter.email])
+            msg.body = f"Hello {voter.matric_no},\n\nYour secret voting credential for the election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
+            thread = threading.Thread(target=send_async_email, args=(app, msg))
+            thread.start()
+        except Exception as e:
+            print(f"Failed to email {voter.email}: {e}")
+            
+    return redirect(url_for('admin_panel'))
+
 @app.route('/register', methods=['POST'])
 def register():
     settings = get_settings()
@@ -137,26 +161,16 @@ def register():
     if existing_voter:
         return f"<h3>❌ Error: Matric Number {matric_no_input} is already registered!</h3><br><a href='/'>Go Back</a>"
 
-    credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
-
+    # Save details to database WITHOUT generating a credential yet
     new_voter = RegisteredVoter(
         matric_no=matric_no_input, 
         email=email_input, 
-        voter_credential=credential
+        voter_credential=None
     )
     db.session.add(new_voter)
     db.session.commit()
     
-    try:
-        msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[email_input])
-        msg.body = f"Hello {matric_no_input},\n\nYour secret voting credential for the election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
-        
-        thread = threading.Thread(target=send_async_email, args=(app, msg))
-        thread.start()
-    except Exception as e:
-        return f"<h3>⚠️ Registered successfully, but failed to start email thread: {e}</h3><br><a href='/'>Go Home</a>"
-    
-    return "<h3>✅ Success! Your unique voting credential has been sent to your email address.</h3><br><a href='/'>Go Home</a>"
+    return "<h3>✅ Pre-registration Successful! Your details have been saved. The administrator will send your unique voting credential to your email shortly.</h3><br><a href='/'>Go Home</a>"
 
 @app.route('/vote', methods=['GET', 'POST'])
 def vote_login():
@@ -211,20 +225,19 @@ def admin_panel():
     voters = RegisteredVoter.query.all()
     settings = get_settings()
     
+    try:
+        all_votes = VoteRecord.query.all()
+    except Exception:
+        all_votes = []
+        
     position_results = {}
     for position, candidates in ELECTION_POSITIONS.items():
         candidates_data = []
-        try:
-            total_pos_votes = sum(db.session.query(VoteRecord).filter_by(position=position, candidate=c).count() for c in candidates)
-        except Exception:
-            total_pos_votes = 0
+        pos_votes = [v for v in all_votes if v.position == position]
+        total_pos_votes = len(pos_votes)
         
         for candidate in candidates:
-            try:
-                count = db.session.query(VoteRecord).filter_by(position=position, candidate=candidate).count()
-            except Exception:
-                count = 0
-                
+            count = sum(1 for v in pos_votes if v.candidate == candidate)
             percentage = (count / total_pos_votes * 100) if total_pos_votes > 0 else 0
             candidates_data.append({
                 'name': candidate, 
