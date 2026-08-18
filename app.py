@@ -73,8 +73,18 @@ def get_settings():
 
 with app.app_context():
     db.create_all()
+    # Auto-fix outdated vote_record table schema if missing 'position' column
+    try:
+        inspector = db.inspect(db.engine)
+        if "vote_record" in inspector.get_table_names():
+            columns = [c["name"] for c in inspector.get_columns("vote_record")]
+            if "position" not in columns:
+                VoteRecord.__table__.drop(db.engine)
+                db.create_all()
+    except Exception as e:
+        print(f"Schema check note: {e}")
     get_settings()
-
+    
 VALID_VOTERS = [
     'UG/23/0533',
     'ADUN/24/007',
