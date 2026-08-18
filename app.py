@@ -15,7 +15,7 @@ def send_async_email(app, msg):
 app = Flask(__name__)
 app.secret_key = 'eleco-secret-key-2026a'
 
-# --- DATABASE CONFIG (Absolute path for Render & local compatibility) ---
+# --- DATABASE CONFIG ---
 basedir = os.path.abspath(os.path.dirname(__file__))
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///' + os.path.join(basedir, 'election.db')
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -63,7 +63,6 @@ class ElectionSettings(db.Model):
     registration_open = db.Column(db.Boolean, default=False)
     voting_open = db.Column(db.Boolean, default=False)
 
-# --- HELPER TO GET OR CREATE SETTINGS SAFELY ---
 def get_settings():
     settings = ElectionSettings.query.first()
     if not settings:
@@ -72,12 +71,10 @@ def get_settings():
         db.session.commit()
     return settings
 
-# --- INITIALIZE DATABASE TABLES & DEFAULT SETTINGS ---
 with app.app_context():
-    db.create_all() # Creates tables safely without deleting existing data
+    db.create_all()
     get_settings()
 
-# --- MASTER LIST (Add all approved student matric numbers here) ---
 VALID_VOTERS = [
     'UG/23/0533',
     'ADUN/24/007',
