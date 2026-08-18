@@ -35,7 +35,7 @@ class RegisteredVoter(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     matric_no = db.Column(db.String(50), unique=True, nullable=False)
     email = db.Column(db.String(100), nullable=False)
-    voter_credential = db.Column(db.String(50), unique=True, nullable=True) # Nullable until admin sends it
+    voter_credential = db.Column(db.String(50), unique=True, nullable=True)
     has_voted = db.Column(db.Boolean, default=False)
 
 class VoteRecord(db.Model):
@@ -102,14 +102,10 @@ def clear_votes():
         return redirect(url_for('admin_login'))
     
     try:
-        # Delete all vote records from the ballot box
         VoteRecord.query.delete()
-        
-        # Safely reset 'has_voted' status for each registered voter
         voters = RegisteredVoter.query.all()
         for v in voters:
             v.has_voted = False
-            
         db.session.commit()
     except Exception as e:
         db.session.rollback()
@@ -132,24 +128,19 @@ def send_credentials():
     if not session.get('admin_logged_in'): 
         return redirect(url_for('admin_login'))
     
-    # Find all voters who haven't been assigned a credential yet
-    unprocessed_voters = RegisteredVoter.query.filter(
-        (RegisteredVoter.voter_credential == None) | (RegisteredVoter.voter_credential == '')
-    ).all()
+    # Grab all registered voters and email the credentials already saved in the table
+    voters = RegisteredVoter.query.all()
     
-    for voter in unprocessed_voters:
-        credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
-        voter.voter_credential = credential
-        db.session.commit()
-        
-        try:
-            msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[voter.email])
-            msg.body = f"Hello {voter.matric_no},\n\nYour secret voting credential for the election is: {credential}\n\nPlease keep this safe and do not share it with anyone."
-            thread = threading.Thread(target=send_async_email, args=(app, msg))
-            thread.start()
-        except Exception as e:
-            print(f"Failed to email {voter.email}: {e}")
-            
+    for voter in voters:
+        if voter.voter_credential and voter.email:
+            try:
+                msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[voter.email])
+                msg.body = f"Hello {voter.matric_no},\n\nYour secret voting credential for the election is: {voter.voter_credential}\n\nPlease keep this safe and do not share it with anyone."
+                thread = threading.Thread(target=send_async_email, args=(app, msg))
+                thread.start()
+            except Exception as e:
+                print(f"Failed to email {voter.email}: {e}")
+                
     return redirect(url_for('admin_panel'))
 
 @app.route('/register', methods=['POST'])
@@ -172,16 +163,18 @@ def register():
     if existing_voter:
         return f"<h3>❌ Error: Matric Number {matric_no_input} is already registered!</h3><br><a href='/'>Go Back</a>"
 
-    # Save details to database WITHOUT generating a credential yet
+    # Generate credential immediately and save it to the admin table, without emailing yet
+    credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
+
     new_voter = RegisteredVoter(
         matric_no=matric_no_input, 
         email=email_input, 
-        voter_credential=None
+        voter_credential=credential
     )
     db.session.add(new_voter)
     db.session.commit()
     
-    return "<h3>✅ Pre-registration Successful! Your details have been saved. The administrator will send your unique voting credential to your email shortly.</h3><br><a href='/'>Go Home</a>"
+    return "<h3>✅ Registration Successful! Your voting credential has been generated and stored. The administrator will email it to you shortly.</h3><br><a href='/'>Go Home</a>"
 
 @app.route('/vote', methods=['GET', 'POST'])
 def vote_login():
