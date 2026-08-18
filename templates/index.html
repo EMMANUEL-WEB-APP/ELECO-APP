@@ -2,26 +2,51 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Departmental Election Portal</title>
+    <title>ELECO Election Portal</title>
     <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin-top: 50px; background-color: #f4f7f6; }
-        .card { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 95%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        body { font-family: Arial, sans-serif; background-color: #f4f6f9; margin: 0; padding: 40px; text-align: center; }
+        .container { max-width: 500px; margin: auto; background: white; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        h2 { color: #333; }
+        .btn { display: inline-block; padding: 10px 20px; margin: 10px; background-color: #007bff; color: white; text-decoration: none; border-radius: 4px; font-weight: bold; }
+        .btn:hover { background-color: #0056b3; }
+        .btn-vote { background-color: #28a745; }
+        .btn-vote:hover { background-color: #218838; }
+        form { margin-top: 20px; text-align: left; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input { width: 100%; padding: 10px; margin-bottom: 15px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background-color: #007bff; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; }
         button:hover { background-color: #0056b3; }
-        .link-btn { display: block; margin-top: 15px; color: #007bff; text-decoration: none; font-size: 14px; }
-        .link-btn:hover { text-decoration: underline; }
+        .status-box { background: #e9ecef; padding: 10px; border-radius: 4px; margin-bottom: 20px; font-size: 14px; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>Voter Pre-Registration</h2>
+    <div class="container">
+        <h2>🎓 ELECO Official Portal</h2>
+        
+        <div class="status-box">
+            <p><strong>Registration:</strong> {% if settings.registration_open %}🟢 Open{% else %}🔴 Closed{% endif %}</p>
+            <p><strong>Voting:</strong> {% if settings.voting_open %}🟢 Open{% else %}🔴 Closed{% endif %}</p>
+        </div>
+
+        <div>
+            <a href="/vote" class="btn btn-vote">Proceed to Vote</a>
+            <a href="/admin/login" class="btn">Admin Panel</a>
+        </div>
+
+        <hr style="margin: 25px 0; border: 0; border-top: 1px solid #ddd;">
+
+        <h3>Voter Registration</h3>
+        <p style="font-size: 13px; color: #666;">Register with your departmental matric number to receive your secure voting credential via email.</p>
+        
         <form action="/register" method="POST">
-            <input type="text" name="matric_no" placeholder="Enter Matriculation No. (e.g. UG/23/0533)" required>
-            <input type="email" name="email" placeholder="Enter your email address" required>
-            <button type="submit">Pre-Register to Vote</button>
+            <label>Matric Number:</label>
+            <input type="text" name="matric_no" placeholder="e.g. UG/23/0533" required style="text-transform: uppercase;">
+            
+            <label>Email Address:</label>
+            <input type="email" name="email" placeholder="student@example.com" required>
+            
+            <button type="submit">Register for Credential</button>
         </form>
-        <a href="/vote" class="link-btn">Already have your credential? Click here to Vote</a>
     </div>
 </body>
 </html>

@@ -197,10 +197,17 @@ def admin_panel():
     position_results = {}
     for position, candidates in ELECTION_POSITIONS.items():
         candidates_data = []
-        total_pos_votes = sum(VoteRecord.query.filter_by(position=position, candidate=c).count() for c in candidates)
+        try:
+            total_pos_votes = sum(db.session.query(VoteRecord).filter_by(position=position, candidate=c).count() for c in candidates)
+        except Exception:
+            total_pos_votes = 0
         
         for candidate in candidates:
-            count = VoteRecord.query.filter_by(position=position, candidate=candidate).count()
+            try:
+                count = db.session.query(VoteRecord).filter_by(position=position, candidate=candidate).count()
+            except Exception:
+                count = 0
+                
             percentage = (count / total_pos_votes * 100) if total_pos_votes > 0 else 0
             candidates_data.append({
                 'name': candidate, 

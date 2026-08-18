@@ -2,24 +2,26 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Enter Voting Booth - ELECO</title>
+    <title>Vote Login - ELECO</title>
     <style>
-        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 50px; text-align: center; }
-        .card { background: white; max-width: 400px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
-        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; }
-        button { width: 95%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 16px; }
+        body { font-family: Arial, sans-serif; background-color: #f4f7f6; margin: 0; padding-top: 100px; text-align: center; }
+        .login-card { background: white; max-width: 380px; margin: auto; padding: 30px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        input { width: 90%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 4px; font-size: 14px; text-align: center; text-transform: uppercase; }
+        button { width: 95%; padding: 10px; background-color: #28a745; color: white; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 14px; }
         button:hover { background-color: #218838; }
-        h2 { color: #333; }
+        .home-link { display: block; margin-top: 15px; color: #007bff; text-decoration: none; font-size: 14px; }
+        .home-link:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>📦 Enter Voting Booth</h2>
-        <p style="color: #666; font-size: 14px;">Please enter your unique secret voting credential provided during registration.</p>
+    <div class="login-card">
+        <h2>🗳️ ELECO Voting Portal</h2>
+        <p>Enter your secret voting credential sent to your email to cast your ballot.</p>
         <form action="/vote" method="POST">
-            <input type="text" name="credential" placeholder="E.G. VOTER-1A2B3C" required>
+            <input type="text" name="credential" placeholder="VOTER-XXXXXXXX" required autocomplete="off">
             <button type="submit">Access Ballot</button>
         </form>
+        <a href="/" class="home-link">← Return Home</a>
     </div>
 </body>
 </html>
