@@ -101,9 +101,20 @@ def clear_votes():
     if not session.get('admin_logged_in'): 
         return redirect(url_for('admin_login'))
     
-    VoteRecord.query.delete()
-    RegisteredVoter.query.update({RegisteredVoter.has_voted: False})
-    db.session.commit()
+    try:
+        # Delete all vote records from the ballot box
+        VoteRecord.query.delete()
+        
+        # Safely reset 'has_voted' status for each registered voter
+        voters = RegisteredVoter.query.all()
+        for v in voters:
+            v.has_voted = False
+            
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        print(f"Error clearing votes: {e}")
+        
     return redirect(url_for('admin_panel'))
 
 @app.route('/admin/delete/<int:voter_id>', methods=['POST'])
