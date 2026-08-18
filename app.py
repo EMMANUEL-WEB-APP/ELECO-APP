@@ -169,22 +169,29 @@ def vote_login():
 
 @app.route('/ballot', methods=['GET', 'POST'])
 def ballot():
-    cred = session.get('voting_credential')
-    voter = RegisteredVoter.query.filter_by(voter_credential=cred).first()
-    if not voter or voter.has_voted: return redirect('/vote')
+    try:
+        cred = session.get('voting_credential')
+        if not cred:
+            return redirect('/vote')
+            
+        voter = RegisteredVoter.query.filter_by(voter_credential=cred).first()
+        if not voter or voter.has_voted: 
+            return redirect('/vote')
 
-    if request.method == 'POST':
-        for position in ELECTION_POSITIONS.keys():
-            selected_candidate = request.form.get(position)
-            if selected_candidate:
-                db.session.add(VoteRecord(position=position, candidate=selected_candidate))
-        
-        voter.has_voted = True
-        db.session.commit()
-        session.pop('voting_credential', None)
-        return "<h3>🎉 All votes successfully cast! Your ballot has been recorded anonymously.</h3><br><a href='/'>Return Home</a>"
+        if request.method == 'POST':
+            for position in ELECTION_POSITIONS.keys():
+                selected_candidate = request.form.get(position)
+                if selected_candidate:
+                    db.session.add(VoteRecord(position=position, candidate=selected_candidate))
+            
+            voter.has_voted = True
+            db.session.commit()
+            session.pop('voting_credential', None)
+            return "<h3>🎉 All votes successfully cast! Your ballot has been recorded anonymously.</h3><br><a href='/'>Return Home</a>"
 
-    return render_template('ballot.html', positions=ELECTION_POSITIONS)
+        return render_template('ballot.html', positions=ELECTION_POSITIONS)
+    except Exception as e:
+        return f"<h3>⚠️ Ballot Error: {str(e)}</h3><br><a href='/vote'>Try Again</a>"
 
 @app.route('/admin')
 def admin_panel():
