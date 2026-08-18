@@ -9,8 +9,9 @@ def send_async_email(app, msg):
     with app.app_context():
         try:
             mail.send(msg)
+            print(f"Successfully sent email to {msg.recipients}")
         except Exception as e:
-            print(f"Email error: {e}")
+            print(f"SMTP Email Error: {e}")
 
 app = Flask(__name__)
 app.secret_key = 'eleco-secret-key-2026a'
@@ -128,18 +129,22 @@ def send_credentials():
     if not session.get('admin_logged_in'): 
         return redirect(url_for('admin_login'))
     
-    # Grab all registered voters and email the credentials already saved in the table
     voters = RegisteredVoter.query.all()
     
     for voter in voters:
         if voter.voter_credential and voter.email:
             try:
-                msg = Message("Your ELECO Voting Credential", sender=app.config['MAIL_USERNAME'], recipients=[voter.email])
+                msg = Message(
+                    subject="Your ELECO Voting Credential", 
+                    sender=app.config['MAIL_USERNAME'], 
+                    recipients=[voter.email]
+                )
                 msg.body = f"Hello {voter.matric_no},\n\nYour secret voting credential for the election is: {voter.voter_credential}\n\nPlease keep this safe and do not share it with anyone."
+                
                 thread = threading.Thread(target=send_async_email, args=(app, msg))
                 thread.start()
             except Exception as e:
-                print(f"Failed to email {voter.email}: {e}")
+                print(f"Failed to queue email for {voter.email}: {e}")
                 
     return redirect(url_for('admin_panel'))
 
@@ -163,7 +168,6 @@ def register():
     if existing_voter:
         return f"<h3>❌ Error: Matric Number {matric_no_input} is already registered!</h3><br><a href='/'>Go Back</a>"
 
-    # Generate credential immediately and save it to the admin table, without emailing yet
     credential = "VOTER-" + str(uuid.uuid4())[:8].upper()
 
     new_voter = RegisteredVoter(
